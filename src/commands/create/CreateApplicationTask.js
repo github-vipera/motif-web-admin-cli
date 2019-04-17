@@ -67,7 +67,7 @@ CreateApplicationTask.prototype.runTask= function(commands, args, callback) {
                     console.log("");
                     console.log(chalk.green.bold("Next steps are:"));
                     console.log(chalk.green.bold("> cd " + this.applicationName));
-                    console.log(chalk.green.bold("> npm install "));
+                    //console.log(chalk.green.bold("> npm install "));
                     console.log(chalk.green.bold("> ng serve "));
                     console.log("");
                     console.log("Enjoy!");
