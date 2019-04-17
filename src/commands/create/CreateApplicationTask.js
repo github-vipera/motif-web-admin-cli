@@ -13,6 +13,7 @@ const fs = require('fs-extra');
 const jsonfile = require('jsonfile');
 const replaceInFile = require('replace-in-file');
 const inquirer = require('inquirer');
+const npm = require("npm");
 
 /**
  *
@@ -57,20 +58,25 @@ CreateApplicationTask.prototype.runTask= function(commands, args, callback) {
         this.spinner = this.spinner.start("Preparing the new application");
         this.modifyModule().then(()=>{
             this.moveTempModule();
-            this.runNpmInstall();
-            console.log("");
-            this.spinner = this.spinner.succeed("Application created successfully.");
-            console.log("");
-            console.log(chalk.green.bold("Next steps are:"));
-            console.log(chalk.green.bold("> cd " + this.applicationName));
-            console.log(chalk.green.bold("> npm install "));
-            console.log(chalk.green.bold("> ng serve "));
-            console.log("");
-            console.log("Enjoy!");
-            console.log("");
-            this.cleanTempFolder();
-
-            this.spinner = this.spinner.succeed("New application ready.");
+            this.runNpmInstall((err,data)=>{
+                if (err){
+                    this.spinner = this.spinner.fail("Application creation fail:", err);
+                } else {
+                    console.log("");
+                    this.spinner = this.spinner.succeed("Application created successfully.");
+                    console.log("");
+                    console.log(chalk.green.bold("Next steps are:"));
+                    console.log(chalk.green.bold("> cd " + this.applicationName));
+                    console.log(chalk.green.bold("> npm install "));
+                    console.log(chalk.green.bold("> ng serve "));
+                    console.log("");
+                    console.log("Enjoy!");
+                    console.log("");
+        
+                    this.spinner = this.spinner.succeed("New application ready.");
+                }
+                this.cleanTempFolder();
+            });
 
         }, (error)=>{
 
@@ -95,8 +101,22 @@ CreateApplicationTask.prototype.runTask= function(commands, args, callback) {
 
 
 
-CreateApplicationTask.prototype.runNpmInstall = function() {
+CreateApplicationTask.prototype.runNpmInstall = function(callback) {
+    console.log("Installing dependencies...");
     process.chdir('./' + this.applicationName);
+    npm.load(function(err) {
+        // handle errors
+      
+        // install module ffi
+        npm.commands.install([], function(er, data) {
+            callback(er, data);
+        });
+      
+        npm.on('log', function(message) {
+          // log installation progress
+          console.log(message);
+        });
+      });
     //console.log("Current folder is ", __dirname);
 }
 
@@ -166,7 +186,7 @@ CreateApplicationTask.prototype.updateHTML = function() {
             };
             try {
                 const changes = replaceInFile.sync(options);
-                console.log('Modified files:', changes.join(', '));
+                //console.log('Modified files:', changes.join(', '));
                 resolve();
             } catch (error) {
                 console.error('Error occurred:', error);
