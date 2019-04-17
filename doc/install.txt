@@ -1,0 +1,5 @@
+Synopsis
+
+    wc-cli install module [moduleName]
+
+Show syntax summary, or the help for a specific command.

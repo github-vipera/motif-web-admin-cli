@@ -1,0 +1,5 @@
+Synopsis
+
+    wc-cli serve [port]    ..................... start the current web console in a local http server for develop purpose
+
+Show syntax summary, or the help for a specific command.

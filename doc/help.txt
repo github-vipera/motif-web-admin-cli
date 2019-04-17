@@ -1,0 +1,7 @@
+Synopsis
+
+    wc-cli help [command]
+    wc-cli [command] -h
+    wc-cli -h [command]
+
+Show syntax summary, or the help for a specific command.

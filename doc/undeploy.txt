@@ -1,0 +1,10 @@
+Synopsis
+
+    wc-cli undeploy -r [remotehost] -username usr -passwd mypwd ........... un-deploy current web console from a remote server and remove the bundle
+
+Options
+    -r, --remote ........................ remote MOTIF host to deploy
+    -user ............................... basic authentication user name
+    -passwd ............................. basic authentication user password
+
+Show syntax summary, or the help for a specific command.

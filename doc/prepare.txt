@@ -1,0 +1,9 @@
+Synopsis
+
+    wc-cli prepare -n [name] -v [version]
+
+Options
+    -n, --name .......................... the console application name
+    -v, --version ...................... the version of the released console application, '1.0.0' by default
+
+Show syntax summary, or the help for a specific command.
