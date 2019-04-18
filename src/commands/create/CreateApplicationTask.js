@@ -15,6 +15,8 @@ const replaceInFile = require('replace-in-file');
 const inquirer = require('inquirer');
 const npm = require("npm");
 
+const github_project_url = 'https://github.com/github-vipera/motif-web-admin-template-project.git';
+
 /**
  *
  * @constructor
@@ -24,7 +26,7 @@ function CreateApplicationTask(){
 
 CreateApplicationTask.prototype.runTask= function(commands, args, callback) {
 
-    this.spinner = ora('Creating New Wed Admin Application...').start();
+    this.spinner = ora('Creating New Web Admin Application...').start();
 
     // Check args
     this.applicationName = args.name;
@@ -347,7 +349,7 @@ CreateApplicationTask.prototype.cloneTemplateRepo = function(template) {
 
 CreateApplicationTask.prototype.prepareFolders = function(template) {
     this.tempFolder = this.createTempFolder();
-    console.log('Temp Folder: ', this.tempFolder);
+    //console.log('Temp Folder: ', this.tempFolder);
     this.prjTempFolder = path.join(this.tempFolder, this.applicationName);
 }
 
@@ -359,7 +361,7 @@ CreateApplicationTask.prototype.createTempFolder = function(template) {
 CreateApplicationTask.prototype.repoPathForTemplate = function(template) {
 
     if (template==='default'){
-        return 'https://github.com/github-vipera/motif-web-admin-template-project.git';
+        return github_project_url;
     } else {
         return undefined;
     }
