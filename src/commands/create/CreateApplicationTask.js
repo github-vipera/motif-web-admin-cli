@@ -240,9 +240,9 @@ CreateApplicationTask.prototype.updateAngularJsonFile = function() {
 
         //Replace all names
         let angularJsonFile = path.join(this.prjTempFolder, "angular.json");
-        const options = {
+        let options = {
             files: angularJsonFile,
-            from: /web-console-template/g,
+            from: /motif-web-admin-template-project/g,
             to: this.applicationName,
         };
         try {
@@ -252,9 +252,8 @@ CreateApplicationTask.prototype.updateAngularJsonFile = function() {
             console.error('Error occurred:', error);
             reject(error);
         }
-        
+       
         // Enable Proxy if needed
-
         this.updateAngularJsonFileForProxy().then(()=>{
             resolve();
         }, (error)=>{
@@ -269,6 +268,7 @@ CreateApplicationTask.prototype.updateAngularJsonFileForProxy = function(angular
 
     var myPromise = new Promise((resolve, reject)=>{
 
+        /*
         var questions = [
             {
                 type: 'confirm',
@@ -302,6 +302,24 @@ CreateApplicationTask.prototype.updateAngularJsonFileForProxy = function(angular
                 }
             }
         ];
+        */
+       var questions = [
+        {
+            type: 'confirm',
+            name: 'proxyEnabled',
+            message: 'Do you want to add proxy support in your project?',
+            default: true
+        },
+        {
+            type: 'input',
+            name: 'proxyURL',
+            message: 'Enter the URL address of your MOTIF:',
+            when: function(answers) {
+                return answers.proxyEnabled;
+            }
+        }
+    ];
+
 
         this.spinner = this.spinner.stop();
 
@@ -313,16 +331,21 @@ CreateApplicationTask.prototype.updateAngularJsonFileForProxy = function(angular
                     // Update the json file
                     let packageJsonFile = path.join(this.prjTempFolder, "angular.json");
                     let packageJson = jsonfile.readFileSync(packageJsonFile);
+
                     packageJson.projects[this.applicationName].architect.serve.options["proxyConfig"] = "./proxy.conf.json";
                     jsonfile.writeFileSync(packageJsonFile, packageJson,   {spaces: 2, EOL: '\r\n'});
-
 
                     // Update proxy settings
                     let proxyJsonFile = path.join(this.prjTempFolder, "proxy.conf.json");
                     let proxyJson = jsonfile.readFileSync(proxyJsonFile);
+
+                    /*
                     proxyJson["/rest"].target = answers.proxyScheme +"://" + answers.proxyIP + ":" + answers.proxyPort;
                     proxyJson["/oauth"].target = answers.proxyScheme +"://" + answers.proxyIP + ":" + answers.proxyPort;
-                    jsonfile.writeFileSync(proxyJsonFile, proxyJson,   {spaces: 2, EOL: '\r\n'});
+                    */
+                   proxyJson["\/rest"].target = answers.proxyURL;
+                   proxyJson["\/oauth2"].target = answers.proxyURL;
+                   jsonfile.writeFileSync(proxyJsonFile, proxyJson,   {spaces: 2, EOL: '\r\n'});
 
                 } else {
 
