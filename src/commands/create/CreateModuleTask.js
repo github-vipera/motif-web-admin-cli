@@ -109,11 +109,11 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
 
 CreateModuleTask.prototype.runNpmInstall = function(callback) {
     
-    
+    /*
     //skip only for debug
     callback(null,{});
     return;
-    
+    */
 
     console.log("Installing dependencies...");
     process.chdir('./' + this.moduleName);
