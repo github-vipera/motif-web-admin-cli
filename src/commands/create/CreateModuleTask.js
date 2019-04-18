@@ -141,11 +141,12 @@ CreateModuleTask.prototype.modifyModule = function() {
 
         this.updatePackageJsonFile().then(()=>{
 
-            resolve();
-            /*
             // Update the angular.json file
             this.updateAngularJsonFile().then(()=>{
 
+                resolve();
+
+                /*
                 // Update the Application Descriptor JSON file 
                 this.updateConsoleDescriptorJsonFile().then(()=>{
                     
@@ -158,11 +159,11 @@ CreateModuleTask.prototype.modifyModule = function() {
                 }, (error)=>{
                     reject(error);
                 });
+                */
     
             }, (error)=>{
                 reject(error);
             })     
-            */
 
         }, (error)=>{
             reject(error);
@@ -258,9 +259,10 @@ CreateModuleTask.prototype.updateAngularJsonFile = function() {
 
         //Replace all names
         let angularJsonFile = path.join(this.prjTempFolder, "angular.json");
+
         let options = {
             files: angularJsonFile,
-            from: /motif-web-admin-template-project/g,
+            from: /custom-web-admin-module/g,
             to: this.moduleName,
         };
         try {
@@ -315,7 +317,7 @@ CreateModuleTask.prototype.updateAngularJsonFileForProxy = function(angularJsonF
                     let packageJsonFile = path.join(this.prjTempFolder, "angular.json");
                     let packageJson = jsonfile.readFileSync(packageJsonFile);
 
-                    packageJson.projects[this.moduleName].architect.serve.options["proxyConfig"] = "./proxy.conf.json";
+                    packageJson.projects[default_test_app_project_name].architect.serve.options["proxyConfig"] = "./proxy.conf.json";
                     jsonfile.writeFileSync(packageJsonFile, packageJson,   {spaces: 2, EOL: '\r\n'});
 
                     // Update proxy settings
