@@ -16,6 +16,8 @@ const inquirer = require('inquirer');
 const npm = require("npm");
 
 const github_project_url = 'https://github.com/github-vipera/motif-web-admin-module-template-project.git';
+const default_module_project_name = 'custom-web-admin-module';
+const default_test_app_project_name = 'custom-module-test-app';
 
 /**
  *
@@ -29,7 +31,7 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
     this.spinner = ora('Creating New Web Admin Module...').start();
 
     // Check args
-    this.applicationName = args.name;
+    this.moduleName = args.name;
     this.description = "";
     if (args.description){
         //application description
@@ -68,8 +70,8 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
                     this.spinner = this.spinner.succeed("Module created successfully.");
                     console.log("");
                     console.log(chalk.green.bold("Next steps are:"));
-                    console.log(chalk.green.bold("> cd " + this.applicationName));
-                    console.log(chalk.green.bold("> ng build "+ this.applicationName));
+                    console.log(chalk.green.bold("> cd " + this.moduleName));
+                    console.log(chalk.green.bold("> ng build "+ this.moduleName));
                     console.log(chalk.green.bold("> ng serve "));
                     console.log("");
                     console.log("Enjoy!");
@@ -104,8 +106,13 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
 
 
 CreateModuleTask.prototype.runNpmInstall = function(callback) {
+    
+    //skip only for debug
+    callback(null,{});
+    return;
+
     console.log("Installing dependencies...");
-    process.chdir('./' + this.applicationName);
+    process.chdir('./' + this.moduleName);
     npm.load(function(err) {
         // handle errors
       
@@ -124,7 +131,7 @@ CreateModuleTask.prototype.runNpmInstall = function(callback) {
 
 // Move the module form the temp folder to the current working dir
 CreateModuleTask.prototype.moveTempModule = function() {
-    fs.moveSync(this.prjTempFolder, './'+this.applicationName);
+    fs.moveSync(this.prjTempFolder, './'+this.moduleName);
 }
 
 // Change package.json module name
@@ -134,6 +141,8 @@ CreateModuleTask.prototype.modifyModule = function() {
 
         this.updatePackageJsonFile().then(()=>{
 
+            resolve();
+            /*
             // Update the angular.json file
             this.updateAngularJsonFile().then(()=>{
 
@@ -153,10 +162,12 @@ CreateModuleTask.prototype.modifyModule = function() {
             }, (error)=>{
                 reject(error);
             })     
-    
+            */
+
         }, (error)=>{
             reject(error);
         });
+        
     
     });
 
@@ -219,7 +230,7 @@ CreateModuleTask.prototype.updateConsoleDescriptorJsonFile = function() {
         // Update the webconsole.descriptor.json file
         let webConsoleDescriptorJsonFile = path.join(this.prjTempFolder, "webconsole.descriptor.json");
         let webConsoleDescriptorJson = jsonfile.readFileSync(webConsoleDescriptorJsonFile);
-        webConsoleDescriptorJson.name = this.applicationName;
+        webConsoleDescriptorJson.name = this.moduleName;
         webConsoleDescriptorJson.description = this.description;
         jsonfile.writeFileSync(webConsoleDescriptorJsonFile, webConsoleDescriptorJson,   {spaces: 2, EOL: '\r\n'});
         resolve();
@@ -232,9 +243,9 @@ CreateModuleTask.prototype.updatePackageJsonFile = function() {
     return new Promise((resolve, reject)=>{
 
         // Update the package.json file
-        let packageJsonFile = path.join(this.prjTempFolder, "package.json");
+        let packageJsonFile = path.join(this.prjTempFolder, "projects", "custom-web-admin-module", "package.json");
         let packageJson = jsonfile.readFileSync(packageJsonFile);
-        packageJson.name = this.applicationName;
+        packageJson.name = this.moduleName;
         jsonfile.writeFileSync(packageJsonFile, packageJson,   {spaces: 2, EOL: '\r\n'});
         
         resolve();
@@ -250,7 +261,7 @@ CreateModuleTask.prototype.updateAngularJsonFile = function() {
         let options = {
             files: angularJsonFile,
             from: /motif-web-admin-template-project/g,
-            to: this.applicationName,
+            to: this.moduleName,
         };
         try {
             const changes = replaceInFile.sync(options);
@@ -304,7 +315,7 @@ CreateModuleTask.prototype.updateAngularJsonFileForProxy = function(angularJsonF
                     let packageJsonFile = path.join(this.prjTempFolder, "angular.json");
                     let packageJson = jsonfile.readFileSync(packageJsonFile);
 
-                    packageJson.projects[this.applicationName].architect.serve.options["proxyConfig"] = "./proxy.conf.json";
+                    packageJson.projects[this.moduleName].architect.serve.options["proxyConfig"] = "./proxy.conf.json";
                     jsonfile.writeFileSync(packageJsonFile, packageJson,   {spaces: 2, EOL: '\r\n'});
 
                     // Update proxy settings
@@ -355,7 +366,7 @@ CreateModuleTask.prototype.cloneTemplateRepo = function(template) {
 CreateModuleTask.prototype.prepareFolders = function(template) {
     this.tempFolder = this.createTempFolder();
     //console.log('Temp Folder: ', this.tempFolder);
-    this.prjTempFolder = path.join(this.tempFolder, this.applicationName);
+    this.prjTempFolder = path.join(this.tempFolder, this.moduleName);
 }
 
 CreateModuleTask.prototype.createTempFolder = function(template) {
