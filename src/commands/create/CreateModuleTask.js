@@ -37,7 +37,7 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
         //application description
         this.description = args.description;
     }
-    this.template = 'default';
+    this.template = null;//'default';
     if (args.template){
         //download this template
         this.template = args.template;
@@ -54,52 +54,64 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
     //creating a temporary folder
     this.prepareFolders();
 
-    this.spinner = this.spinner.start("Cloning from repo " + this.repoPath +"...");
 
-    this.cloneTemplateRepo().then(status => {
-        this.spinner = this.spinner.succeed("Module template cloned.");
+    this.askForTemplate().then( ()=>{
 
-        this.spinner = this.spinner.start("Preparing the new module");
-        
-        this.modifyModule().then(()=>{
-            this.renameProjectFolder();
-            this.moveTempModule();
-            this.runNpmInstall((err,data)=>{
-                if (err){
-                    this.spinner = this.spinner.fail("Module creation fail:", err);
-                } else {
-                    console.log("");
-                    this.spinner = this.spinner.succeed("Module created successfully.");
-                    console.log("");
-                    console.log(chalk.green.bold("Next steps are:"));
-                    console.log(chalk.green.bold("> cd " + this.moduleName));
-                    console.log(chalk.green.bold("> ng build "+ this.moduleName));
-                    console.log(chalk.green.bold("> ng serve "));
-                    console.log("");
-                    console.log("Enjoy!");
-                    console.log("");
-        
-                    this.spinner = this.spinner.succeed("New module ready.");
-                }
+        this.spinner = this.spinner.start("Cloning from repo " + this.repoPath +"...");
+        this.cloneTemplateRepo(this.template).then(status => {
+            this.spinner = this.spinner.succeed("Module template cloned.");
+    
+            this.spinner = this.spinner.start("Preparing the new module");
+            
+            this.modifyModule().then(()=>{
+                this.renameProjectFolder();
+                this.moveTempModule();
+                this.runNpmInstall((err,data)=>{
+                    if (err){
+                        this.spinner = this.spinner.fail("Module creation fail:", err);
+                    } else {
+                        console.log("");
+                        this.spinner = this.spinner.succeed("Module created successfully.");
+                        console.log("");
+                        console.log(chalk.green.bold("Next steps are:"));
+                        console.log(chalk.green.bold("> cd " + this.moduleName));
+                        console.log(chalk.green.bold("> ng build "+ this.moduleName));
+                        console.log(chalk.green.bold("> ng serve "));
+                        console.log("");
+                        console.log("Enjoy!");
+                        console.log("");
+            
+                        this.spinner = this.spinner.succeed("New module ready.");
+                    }
+                    this.cleanTempFolder();
+                });
+    
+            }, (error)=>{
+    
+                console.log(chalk.red.bold("Error: ", error));
+                console.log("");
                 this.cleanTempFolder();
+                this.spinner.fail(err);
+    
             });
-
-        }, (error)=>{
-
-            console.log(chalk.red.bold("Error: ", error));
+            
+    
+        }).catch(err => {
+            console.log(chalk.red.bold("Error: ", err));
             console.log("");
             this.cleanTempFolder();
             this.spinner.fail(err);
-
         });
-        
 
-    }).catch(err => {
+    }, (error)=>{
+
         console.log(chalk.red.bold("Error: ", err));
         console.log("");
-        this.cleanTempFolder();
         this.spinner.fail(err);
+
     });
+
+
 
     //console.log(chalk.red.bold("Executing create module: ",moduleName, template));
 
@@ -491,11 +503,55 @@ CreateModuleTask.prototype.cleanTempFolder = function() {
     fs.removeSync(this.tempFolder);
 }
 
+CreateModuleTask.prototype.askForTemplate = function() {
+
+    //Ask for template
+   return new Promise((resolve,reject)=>{
+       
+        if (this.template){
+            resolve(this.template);
+        } else {
+
+            var questions = [
+                {
+                    type: 'list',
+                    name: 'choosedTemplate',
+                    message: 'Select a project template:',
+                    default: ['blank'],
+                    choices : [ 'blank', 'grid', 'dashboard']
+                }
+            ];
+        
+            this.spinner = this.spinner.stop();
+
+            inquirer.prompt(questions).then( (answers) => {
+
+                if (answers.choosedTemplate === 'blank' ){
+                    this.template = null;                    
+                } else {
+                    this.template = answers.choosedTemplate;                    
+                }
+    
+                resolve(this.template);
+
+            });
+
+        } 
+   })
+
+}
+
 CreateModuleTask.prototype.cloneTemplateRepo = function(template) {
+
     //Clone the repo
    return new Promise((resolve,reject)=>{
 
-        git().clone(this.repoPath, this.prjTempFolder).then(()=>{
+        let options = null;
+        if (template){
+            options = ['-b', template + '_template'];
+        }
+
+        git().clone(this.repoPath, this.prjTempFolder, options).then(()=>{
 
             this.removeGitFolder().then( ()=> {
                 resolve();
@@ -504,10 +560,12 @@ CreateModuleTask.prototype.cloneTemplateRepo = function(template) {
             })
 
         }, (error)=>{
+            console.error("error:" , error);
             reject(error);
         })
 
    });
+   
 
 }
 
@@ -525,11 +583,14 @@ CreateModuleTask.prototype.createTempFolder = function(template) {
 
 CreateModuleTask.prototype.repoPathForTemplate = function(template) {
 
+    return github_project_url;
+    /*
     if (template==='default'){
         return github_project_url;
     } else {
         return undefined;
     }
+    */
 
 }
 
