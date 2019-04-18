@@ -268,41 +268,6 @@ CreateApplicationTask.prototype.updateAngularJsonFileForProxy = function(angular
 
     var myPromise = new Promise((resolve, reject)=>{
 
-        /*
-        var questions = [
-            {
-                type: 'confirm',
-                name: 'proxyEnabled',
-                message: 'Do you want to add proxy support in your project?',
-                default: false
-            },
-            {
-                type: 'input',
-                name: 'proxyIP',
-                message: 'Enter the ip address of your MOTIF:',
-                when: function(answers) {
-                    return answers.proxyEnabled;
-                }
-            },
-            {
-                type: 'input',
-                name: 'proxyPort',
-                message: 'Enter the port number of your MOTIF:',
-                when: function(answers) {
-                    return answers.proxyEnabled;
-                }
-            },
-            {
-                type: 'input',
-                name: 'proxyScheme',
-                message: 'Enter the URL scheme:',
-                default: "http",
-                when: function(answers) {
-                    return answers.proxyEnabled;
-                }
-            }
-        ];
-        */
        var questions = [
         {
             type: 'confirm',
@@ -339,10 +304,6 @@ CreateApplicationTask.prototype.updateAngularJsonFileForProxy = function(angular
                     let proxyJsonFile = path.join(this.prjTempFolder, "proxy.conf.json");
                     let proxyJson = jsonfile.readFileSync(proxyJsonFile);
 
-                    /*
-                    proxyJson["/rest"].target = answers.proxyScheme +"://" + answers.proxyIP + ":" + answers.proxyPort;
-                    proxyJson["/oauth"].target = answers.proxyScheme +"://" + answers.proxyIP + ":" + answers.proxyPort;
-                    */
                    proxyJson["\/rest"].target = answers.proxyURL;
                    proxyJson["\/oauth2"].target = answers.proxyURL;
                    jsonfile.writeFileSync(proxyJsonFile, proxyJson,   {spaces: 2, EOL: '\r\n'});
