@@ -144,7 +144,28 @@ CreateModuleTask.prototype.modifyModule = function() {
             // Update the angular.json file
             this.updateAngularJsonFile().then(()=>{
 
-                resolve();
+                // Update the project/ng-package.json file
+                this.updateNgPackageJsonFile().then(()=>{
+
+                // Update the project/karma.conf.js file
+                this.updateKarmaConfJSFile().then(()=>{
+
+                    // Update the tsconfig.json file
+                    this.updateTSConfigJSONFile().then( ()=>{
+
+                        resolve();
+
+                    }, (error) =>{
+                        reject(error);
+                    });
+
+                    }, (error)=>{
+                        reject(error);
+                    });
+
+                }, (error) => {
+                    reject(error);
+                });
 
                 /*
                 // Update the Application Descriptor JSON file 
@@ -252,6 +273,95 @@ CreateModuleTask.prototype.updatePackageJsonFile = function() {
         resolve();
     });
 }
+
+
+CreateModuleTask.prototype.updateNgPackageJsonFile = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Replace all names
+        let angularJsonFile = path.join(this.prjTempFolder, "projects", default_module_project_name, "ng-package.json");
+
+        let options = {
+            files: angularJsonFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
+            //console.log('Modified files:', changes.join(', '));
+            resolve();
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+       
+    });
+}
+
+CreateModuleTask.prototype.updateKarmaConfJSFile = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Replace all names
+        let karmaConfFile = path.join(this.prjTempFolder, "projects", default_module_project_name, "karma.conf.js");
+
+        let options = {
+            files: karmaConfFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
+            resolve();
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+       
+    });
+}
+
+CreateModuleTask.prototype.updateTSConfigJSONFile = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Replace all names
+        let tsConfFile = path.join(this.prjTempFolder, "tsconfig.json");
+
+        let options = {
+            files: tsConfFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
+            resolve();
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+       
+    });
+}
+
+CreateModuleTask.prototype.removeGitFolder = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Remove .git folder derived from the clone command
+        let gitFolder = path.join(this.prjTempFolder, ".git");
+        
+        fs.remove(gitFolder, err => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+          })
+    });
+}
+
 
 CreateModuleTask.prototype.updateAngularJsonFile = function() {
 
@@ -361,7 +471,22 @@ CreateModuleTask.prototype.cloneTemplateRepo = function(template) {
         stderr.pipe(process.stderr);
     }).clone(this.repoPath, this.prjTempFolder);
     */   
-   return git().clone(this.repoPath, this.prjTempFolder);
+   return new Promise((resolve,reject)=>{
+
+        git().clone(this.repoPath, this.prjTempFolder).then(()=>{
+
+            this.removeGitFolder().then( ()=> {
+                resolve();
+            }, (error) =>{
+                reject(error);
+            })
+
+        }, (error)=>{
+            reject(error);
+        })
+
+   });
+   
 }
 
 

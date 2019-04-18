@@ -343,7 +343,21 @@ CreateApplicationTask.prototype.cloneTemplateRepo = function(template) {
         stderr.pipe(process.stderr);
     }).clone(this.repoPath, this.prjTempFolder);
     */   
-   return git().clone(this.repoPath, this.prjTempFolder);
+   return new Promise((resolve,reject)=>{
+
+        git().clone(this.repoPath, this.prjTempFolder).then(()=>{
+
+            this.removeGitFolder().then( ()=> {
+                resolve();
+            }, (error) =>{
+                reject(error);
+            })
+
+        }, (error)=>{
+            reject(error);
+        })
+
+    });
 }
 
 
@@ -368,6 +382,22 @@ CreateApplicationTask.prototype.repoPathForTemplate = function(template) {
 
 }
 
+CreateApplicationTask.prototype.removeGitFolder = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Remove .git folder derived from the clone command
+        let gitFolder = path.join(this.prjTempFolder, ".git");
+        
+        fs.remove(gitFolder, err => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+          })
+    });
+}
 
 // export the class
 module.exports = CreateApplicationTask;
