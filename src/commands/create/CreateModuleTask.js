@@ -107,9 +107,11 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
 
 CreateModuleTask.prototype.runNpmInstall = function(callback) {
     
+    /*
     //skip only for debug
     callback(null,{});
     return;
+    */
 
     console.log("Installing dependencies...");
     process.chdir('./' + this.moduleName);
@@ -139,56 +141,60 @@ CreateModuleTask.prototype.modifyModule = function() {
 
     return new Promise((resolve, reject)=>{
 
+        this.spinner = this.spinner.start("Updating package.json file.");
+
         this.updatePackageJsonFile().then(()=>{
+
+            this.spinner = this.spinner.succeed("package.json file updated.");
+            this.spinner = this.spinner.start("Updating angular.json file.");
 
             // Update the angular.json file
             this.updateAngularJsonFile().then(()=>{
 
+                this.spinner = this.spinner.succeed("angular.json file updated.");
+                this.spinner = this.spinner.start("Updating ng-package.json file.");
+
                 // Update the project/ng-package.json file
                 this.updateNgPackageJsonFile().then(()=>{
 
-                // Update the project/karma.conf.js file
-                this.updateKarmaConfJSFile().then(()=>{
+                    this.spinner = this.spinner.succeed("ng-package.json file updated.");
+                    this.spinner = this.spinner.start("Updating karma.conf.js file.");
+    
+                    // Update the project/karma.conf.js file
+                    this.updateKarmaConfJSFile().then(()=>{
 
-                    // Update the tsconfig.json file
-                    this.updateTSConfigJSONFile().then( ()=>{
+                        this.spinner = this.spinner.succeed("karma.conf.js file updated.");
+                        this.spinner = this.spinner.start("Updating tsconfig.json file.");
+    
+                        // Update the tsconfig.json file
+                        this.updateTSConfigJSONFile().then( ()=>{
 
-                        this.updateREADMEFile().then( ()=>{ 
+                            this.spinner = this.spinner.succeed("tsconfig.json file updated.");
+                            this.spinner = this.spinner.start("Updating README.md file.");
+    
+                            this.updateREADMEFile().then( ()=>{ 
 
-                            resolve();
+                                this.spinner = this.spinner.succeed("README.md file updated.");
+    
+                                resolve();
+
+                            }, (error) =>{
+
+                                reject(error);
+
+                            });
 
                         }, (error) =>{
-
                             reject(error);
-
                         });
 
-                    }, (error) =>{
+                        }, (error)=>{
+                            reject(error);
+                        });
+
+                    }, (error) => {
                         reject(error);
                     });
-
-                    }, (error)=>{
-                        reject(error);
-                    });
-
-                }, (error) => {
-                    reject(error);
-                });
-
-                /*
-                // Update the Application Descriptor JSON file 
-                this.updateConsoleDescriptorJsonFile().then(()=>{
-                    
-                    this.updateHTML().then(()=>{
-                        resolve();
-                    }, (error)=>{
-                        reject(error);
-                    });
-
-                }, (error)=>{
-                    reject(error);
-                });
-                */
     
             }, (error)=>{
                 reject(error);
@@ -204,69 +210,12 @@ CreateModuleTask.prototype.modifyModule = function() {
 
 }
 
-CreateModuleTask.prototype.updateHTML = function() {
-
-    return new Promise((resolve,reject)=>{
-        resolve();
-        /*
-        var questions = [
-            {
-                type: 'input',
-                name: 'title',
-                message: 'Enter the title of your new console:'
-            }
-        ];
-
-        this.spinner = this.spinner.stop();
-
-        inquirer.prompt(questions).then( (answers) => {
-
-            //update the HTML content
-            let indexHtmlFile = path.join(this.prjTempFolder, "src", "index.html");
-            const options = {
-                files: indexHtmlFile,
-                from: '<title>Demo</title>',
-                to: '<title>'+answers.title+'</title>',
-            };
-            try {
-                const changes = replaceInFile.sync(options);
-                //console.log('Modified files:', changes.join(', '));
-                resolve();
-            } catch (error) {
-                console.error('Error occurred:', error);
-                reject(error);
-            }
- 
-        }, (error)=>{
-            reject(error);
-        });
-        */
-
-    });
-}
-
 CreateModuleTask.prototype.loadHTML = function(file) {
     var contents = fs.readFileSync(file, 'utf8');
     const document = parse5.parse(contents);
     return document;
 }
 
-
-CreateModuleTask.prototype.updateConsoleDescriptorJsonFile = function() {
-
-    return new Promise((resolve,reject)=>{
-        resolve();
-        /*
-        // Update the webconsole.descriptor.json file
-        let webConsoleDescriptorJsonFile = path.join(this.prjTempFolder, "webconsole.descriptor.json");
-        let webConsoleDescriptorJson = jsonfile.readFileSync(webConsoleDescriptorJsonFile);
-        webConsoleDescriptorJson.name = this.moduleName;
-        webConsoleDescriptorJson.description = this.description;
-        jsonfile.writeFileSync(webConsoleDescriptorJsonFile, webConsoleDescriptorJson,   {spaces: 2, EOL: '\r\n'});
-        resolve();
-        */
-    });
-}
 
 CreateModuleTask.prototype.updatePackageJsonFile = function() {
 
@@ -408,7 +357,7 @@ CreateModuleTask.prototype.updateAngularJsonFile = function() {
         };
         try {
             const changes = replaceInFile.sync(options);
-            console.log('Modified files:', changes.join(', '));
+            //console.log('Modified files:', changes.join(', '));
         } catch (error) {
             console.error('Error occurred:', error);
             reject(error);
