@@ -16,8 +16,8 @@ const inquirer = require('inquirer');
 const npm = require("npm");
 
 const github_project_url = 'https://github.com/github-vipera/motif-web-admin-module-template-project.git';
-const default_module_project_name = 'custom-web-admin-module';
-const default_test_app_project_name = 'custom-module-test-app';
+const default_module_project_name = "custom-web-admin-module";
+const default_test_app_project_name = "custom-module-test-app";
 
 /**
  *
@@ -60,7 +60,9 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
         this.spinner = this.spinner.succeed("Module template cloned.");
 
         this.spinner = this.spinner.start("Preparing the new module");
+        
         this.modifyModule().then(()=>{
+            this.renameProjectFolder();
             this.moveTempModule();
             this.runNpmInstall((err,data)=>{
                 if (err){
@@ -107,11 +109,11 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
 
 CreateModuleTask.prototype.runNpmInstall = function(callback) {
     
-    /*
+    
     //skip only for debug
     callback(null,{});
     return;
-    */
+    
 
     console.log("Installing dependencies...");
     process.chdir('./' + this.moduleName);
@@ -223,13 +225,18 @@ CreateModuleTask.prototype.loadHTML = function(file) {
     return document;
 }
 
+CreateModuleTask.prototype.renameProjectFolder = function() {
+    let sourceName = path.join(this.prjTempFolder, "projects", default_module_project_name);
+    let destName = path.join(this.prjTempFolder, "projects", this.moduleName);
+    fs.moveSync(sourceName, destName);
+}
 
 CreateModuleTask.prototype.updatePackageJsonFile = function() {
 
     return new Promise((resolve, reject)=>{
 
         // Update the package.json file
-        let packageJsonFile = path.join(this.prjTempFolder, "projects", "custom-web-admin-module", "package.json");
+        let packageJsonFile = path.join(this.prjTempFolder, "projects", default_module_project_name, "package.json");
         let packageJson = jsonfile.readFileSync(packageJsonFile);
         packageJson.name = this.moduleName;
         jsonfile.writeFileSync(packageJsonFile, packageJson,   {spaces: 2, EOL: '\r\n'});
