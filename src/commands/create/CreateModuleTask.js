@@ -173,34 +173,41 @@ CreateModuleTask.prototype.modifyModule = function() {
                             this.spinner = this.spinner.start("Updating README.md file.");
     
                             this.updateREADMEFile().then( ()=>{ 
-
                                 this.spinner = this.spinner.succeed("README.md file updated.");
-    
                                 resolve();
-
                             }, (error) =>{
-
+                                this.spinner = this.spinner.fail("README.md file update error.");
+                                console.log(chalk.red(error));
                                 reject(error);
-
                             });
 
                         }, (error) =>{
+                            this.spinner = this.spinner.fail("tsconfig.json file update error.");
+                            console.log(chalk.red(error));
                             reject(error);
                         });
 
                         }, (error)=>{
+                            this.spinner = this.spinner.fail("karma.conf.js file update error.");
+                            console.log(chalk.red(error));
                             reject(error);
                         });
 
                     }, (error) => {
+                        this.spinner = this.spinner.fail("ng-package.json file update error.");
+                        console.log(chalk.red(error));
                         reject(error);
                     });
     
             }, (error)=>{
+                this.spinner = this.spinner.fail("angular.json file update error.");
+                console.log(chalk.red(error));
                 reject(error);
             })     
 
         }, (error)=>{
+            this.spinner = this.spinner.fail("package.json file update error.");
+            console.log(chalk.red(error));
             reject(error);
         });
         
