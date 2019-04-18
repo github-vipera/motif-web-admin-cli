@@ -12,6 +12,7 @@ var DeployCommand = require('./commands/DeployCommand');
 var ServeCommand = require('./commands/ServeCommand');
 var UndeployCommand = require('./commands/UndeployCommand');
 var TestCommand = require('./commands/TestCommand');
+var TemplateCommand = require('./commands/TemplateCommand');
 var figlet = require('figlet');
 
 const updateNotifier = require('update-notifier-plus');
@@ -109,6 +110,10 @@ function cli (inputArgs, cb) {
     if (cmd === 'create'){
         return new CreateCommand().execute(remain, args, cb);
     }
+    if (cmd === 'template'){
+        return new TemplateCommand().execute(remain, args, cb);
+    }
+    /*
     if (cmd === 'deploy'){
         return new DeployCommand().execute(remain, args, cb);
     }
@@ -121,6 +126,7 @@ function cli (inputArgs, cb) {
     if (cmd === 'test'){
         return new TestCommand().execute(remain, args, cb);
     }
+    */
 
     return printHelp(remain);
 

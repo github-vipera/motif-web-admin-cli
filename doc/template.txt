@@ -1,0 +1,6 @@
+Synopsis
+
+  List the available project templates
+    wadmin template list ................... list the available project templates
+
+Show syntax summary, or the help for a specific command.
