@@ -176,7 +176,18 @@ CreateModuleTask.prototype.modifyModule = function() {
     
                             this.updateREADMEFile().then( ()=>{ 
                                 this.spinner = this.spinner.succeed("README.md file updated.");
-                                resolve();
+                                this.spinner = this.spinner.start("Updating test application files.");
+
+                                this.updatetestAppJSFiles().then( ()=>{
+                                    this.spinner = this.spinner.succeed("Test application files updated.");
+                                    resolve();
+
+                                }, (error) => {
+                                    this.spinner = this.spinner.fail("tsconfig.json file update error.");
+                                    console.log(chalk.red(error));
+                                    reject(error);
+                                });
+
                             }, (error) =>{
                                 this.spinner = this.spinner.fail("README.md file update error.");
                                 console.log(chalk.red(error));
@@ -261,6 +272,29 @@ CreateModuleTask.prototype.updateNgPackageJsonFile = function() {
         try {
             const changes = replaceInFile.sync(options);
             //console.log('Modified files:', changes.join(', '));
+            resolve();
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+       
+    });
+}
+
+CreateModuleTask.prototype.updatetestAppJSFiles = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Replace all names
+        let karmaConfFile = path.join(this.prjTempFolder, "projects", default_test_app_project_name, "src", "app", "app.module.ts");
+
+        let options = {
+            files: karmaConfFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
             resolve();
         } catch (error) {
             console.error('Error occurred:', error);
