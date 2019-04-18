@@ -32,9 +32,12 @@ TemplateCommand.prototype.execute = function(commands, args, callback) {
 
 TemplateCommand.prototype.executeTemplateList = function(commands, args, callback) {
 
+    /*
     let task = new CreateApplicationTask();
     task.runTask(commands, args, callback);
-
+    */
+   console.log("TODO!!");
+   callback();
 }
 
 
