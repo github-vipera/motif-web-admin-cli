@@ -153,7 +153,15 @@ CreateModuleTask.prototype.modifyModule = function() {
                     // Update the tsconfig.json file
                     this.updateTSConfigJSONFile().then( ()=>{
 
-                        resolve();
+                        this.updateREADMEFile().then( ()=>{ 
+
+                            resolve();
+
+                        }, (error) =>{
+
+                            reject(error);
+
+                        });
 
                     }, (error) =>{
                         reject(error);
@@ -345,6 +353,29 @@ CreateModuleTask.prototype.updateTSConfigJSONFile = function() {
     });
 }
 
+CreateModuleTask.prototype.updateREADMEFile = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Replace all names
+        let tsConfFile = path.join(this.prjTempFolder, "projects", default_module_project_name, "README.md");
+
+        let options = {
+            files: tsConfFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
+            resolve();
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+       
+    });
+}
+
 CreateModuleTask.prototype.removeGitFolder = function() {
 
     return new Promise((resolve,reject)=>{
@@ -465,12 +496,6 @@ CreateModuleTask.prototype.cleanTempFolder = function() {
 
 CreateModuleTask.prototype.cloneTemplateRepo = function(template) {
     //Clone the repo
-    /*
-    return git().outputHandler((command, stdout, stderr) => {
-        stdout.pipe(process.stdout);
-        stderr.pipe(process.stderr);
-    }).clone(this.repoPath, this.prjTempFolder);
-    */   
    return new Promise((resolve,reject)=>{
 
         git().clone(this.repoPath, this.prjTempFolder).then(()=>{
@@ -486,7 +511,7 @@ CreateModuleTask.prototype.cloneTemplateRepo = function(template) {
         })
 
    });
-   
+
 }
 
 
