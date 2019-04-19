@@ -12,6 +12,7 @@ var DeployCommand = require('./commands/DeployCommand');
 var ServeCommand = require('./commands/ServeCommand');
 var UndeployCommand = require('./commands/UndeployCommand');
 var TestCommand = require('./commands/TestCommand');
+const emotikon = require('./emoji.json');
 
 var figlet = require('figlet');
 
@@ -76,7 +77,7 @@ function cli (inputArgs, cb) {
 
     console.log('');
     console.log(chalk.blue.bold("MOTIF Web Admin CLI - Vipera © 2017-2019"));
-    console.log(chalk.blue("Version " , cliVersion));
+    console.log(chalk.blue("Version " , cliVersion), emotikon.herb);
     console.log('');
 
 

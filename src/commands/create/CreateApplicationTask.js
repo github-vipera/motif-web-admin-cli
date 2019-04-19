@@ -14,6 +14,7 @@ const jsonfile = require('jsonfile');
 const replaceInFile = require('replace-in-file');
 const inquirer = require('inquirer');
 const npm = require("npm");
+const emotikon = require('../../emoji.json');
 
 const github_project_url = 'https://github.com/github-vipera/motif-web-admin-template-project.git';
 
@@ -55,7 +56,7 @@ CreateApplicationTask.prototype.runTask= function(commands, args, callback) {
     this.spinner = this.spinner.start("Cloning from repo " + this.repoPath +"...");
 
     this.cloneTemplateRepo().then(status => {
-        this.spinner = this.spinner.succeed("Application template cloned.");
+        this.spinner = this.spinner.succeed(emotikon.building_construction + "  Application template cloned.");
 
         this.spinner = this.spinner.start("Preparing the new application");
         this.modifyModule().then(()=>{
@@ -72,10 +73,11 @@ CreateApplicationTask.prototype.runTask= function(commands, args, callback) {
                     //console.log(chalk.green.bold("> npm install "));
                     console.log(chalk.green.bold("> ng serve "));
                     console.log("");
-                    console.log("Enjoy!");
+                    this.spinner = this.spinner.succeed(emotikon.checkered_flag + " The new application is ready.");
                     console.log("");
-        
-                    this.spinner = this.spinner.succeed("New application ready.");
+                    console.log(emotikon.tada, emotikon.tada, "Enjoy!");
+                    console.log("");
+
                 }
                 this.cleanTempFolder();
             });
@@ -104,7 +106,13 @@ CreateApplicationTask.prototype.runTask= function(commands, args, callback) {
 
 
 CreateApplicationTask.prototype.runNpmInstall = function(callback) {
-    console.log("Installing dependencies...");
+
+    console.log(emotikon.package, "Installing dependencies...");
+
+    //skip only for debug
+    //callback(null,{});
+    //return;
+
     process.chdir('./' + this.applicationName);
     npm.load(function(err) {
         // handle errors
@@ -249,7 +257,7 @@ CreateApplicationTask.prototype.updateAngularJsonFile = function() {
         };
         try {
             const changes = replaceInFile.sync(options);
-            console.log('Modified files:', changes.join(', '));
+            //console.log('Modified files:', changes.join(', '));
         } catch (error) {
             console.error('Error occurred:', error);
             reject(error);
