@@ -526,12 +526,8 @@ CreateModuleTask.prototype.askForTemplate = function() {
 
             inquirer.prompt(questions).then( (answers) => {
 
-                if (answers.choosedTemplate === 'blank' ){
-                    this.template = null;                    
-                } else {
-                    this.template = answers.choosedTemplate;                    
-                }
-    
+                this.template = answers.choosedTemplate;                    
+                
                 resolve(this.template);
 
             });
@@ -548,7 +544,7 @@ CreateModuleTask.prototype.cloneTemplateRepo = function(template) {
 
         let options = null;
         if (template){
-            options = ['-b', template + '_template'];
+            options = ['-b', 'templates/' + template + '_template'];
         }
 
         git().clone(this.repoPath, this.prjTempFolder, options).then(()=>{
