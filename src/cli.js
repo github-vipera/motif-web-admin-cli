@@ -14,8 +14,9 @@ var UndeployCommand = require('./commands/UndeployCommand');
 var TestCommand = require('./commands/TestCommand');
 var figlet = require('figlet');
 
-const updateNotifier = require('update-notifier-plus');
+const updateNotifier = require('update-notifier');
 const pkg = require('../package.json');
+
 
 module.exports = function (inputArgs, cb) {
 
@@ -141,6 +142,7 @@ function printHelp (command) {
 }
 
 function checkForUpdates () {
+    /*
     try {
         // Checks for available update and returns an instance
         var notifier = updateNotifier({
@@ -160,6 +162,8 @@ function checkForUpdates () {
             throw e;
         }
     }
+    */
+   updateNotifier({pkg}).notify();   
 }
 
 
