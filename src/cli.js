@@ -12,6 +12,7 @@ var DeployCommand = require('./commands/DeployCommand');
 var ServeCommand = require('./commands/ServeCommand');
 var UndeployCommand = require('./commands/UndeployCommand');
 var TestCommand = require('./commands/TestCommand');
+
 var figlet = require('figlet');
 
 const updateNotifier = require('update-notifier');

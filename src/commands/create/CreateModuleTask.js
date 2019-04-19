@@ -14,6 +14,7 @@ const jsonfile = require('jsonfile');
 const replaceInFile = require('replace-in-file');
 const inquirer = require('inquirer');
 const npm = require("npm");
+const TemplateList = require('./TemplateList');
 
 const github_project_url = 'https://github.com/github-vipera/motif-web-admin-module-template-project.git';
 const default_module_project_name = "custom-web-admin-module";
@@ -512,23 +513,31 @@ CreateModuleTask.prototype.askForTemplate = function() {
             resolve(this.template);
         } else {
 
-            var questions = [
-                {
-                    type: 'list',
-                    name: 'choosedTemplate',
-                    message: 'Select a project template:',
-                    default: ['blank'],
-                    choices : [ 'blank', 'grid', 'dashboard']
-                }
-            ];
-        
-            this.spinner = this.spinner.stop();
+            new TemplateList().getList().then((templates)=>{
 
-            inquirer.prompt(questions).then( (answers) => {
+                var questions = [
+                    {
+                        type: 'list',
+                        name: 'choosedTemplate',
+                        message: 'Select a project template:',
+                        default: ['blank'],
+                        choices : templates
+                    }
+                ];
+            
+                this.spinner = this.spinner.stop();
+    
+                inquirer.prompt(questions).then( (answers) => {
+    
+                    this.template = answers.choosedTemplate;                    
+                    
+                    resolve(this.template);
+    
+                });
 
-                this.template = answers.choosedTemplate;                    
-                
-                resolve(this.template);
+            }, (error)=>{
+
+                reject(error);
 
             });
 

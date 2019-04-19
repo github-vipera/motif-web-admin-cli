@@ -1,6 +1,6 @@
 {
   "name": "motif-web-admin-cli",
-  "version": "0.0.5",
+  "version": "0.0.6-dev",
   "description": "MOTIF Web Admin CLI",
   "main": "wadmin",
   "bin": {
@@ -21,6 +21,7 @@
     "easy-zip": "0.0.4",
     "figlet": "^1.2.1",
     "fs-extra": "^7.0.1",
+    "github-branches": "^3.1.0",
     "inquirer": "^6.3.1",
     "jsonfile": "^5.0.0",
     "nopt": "^4.0.1",
