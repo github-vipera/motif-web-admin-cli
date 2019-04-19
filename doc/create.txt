@@ -1,12 +1,12 @@
 Synopsis
 
   Create a new module
-    wc-cli create module -n [moduleName]                     ................... create a new module with the given name
-    wc-cli create module -n [moduleName] -t [templateName]   ................... create a new module with the given name from an existing template
+    wadmin create module -n [moduleName]                     ................... create a new module with the given name
+    wadmin create module -n [moduleName] -t [templateName]   ................... create a new module with the given name from an existing template
 
   Create a new Web Admin Application
-    wc-cli create application -n [applicationName]                   ................... create a new console app with the given name
-    wc-cli create application -n [applicationName] -t [templateName] ................... create a new console app with the given name from an existing template
+    wadmin create application -n [applicationName]                   ................... create a new console app with the given name
+    wadmin create application -n [applicationName] -t [templateName] ................... create a new console app with the given name from an existing template
 
 Options
     -n, --name .......................... the new mondule/application name
