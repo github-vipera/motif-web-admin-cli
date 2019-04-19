@@ -1,6 +1,6 @@
 {
   "name": "motif-web-admin-cli",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "MOTIF Web Admin CLI",
   "main": "wadmin",
   "bin": {
@@ -34,7 +34,6 @@
     "tmp": "0.1.0",
     "typescript-parser": "^2.6.1",
     "unirest": "^0.6.0",
-    "update-notifier": "^2.5.0",
-    "update-notifier-plus": "^1.0.1"
+    "update-notifier": "^2.5.0"
   }
 }
