@@ -15,6 +15,7 @@ const replaceInFile = require('replace-in-file');
 const inquirer = require('inquirer');
 const npm = require("npm");
 const TemplateList = require('./TemplateList');
+const emotikon = require('../../emoji.json');
 
 const github_project_url = 'https://github.com/github-vipera/motif-web-admin-module-template-project.git';
 const default_module_project_name = "custom-web-admin-module";
@@ -60,7 +61,7 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
 
         this.spinner = this.spinner.start("Cloning from repo " + this.repoPath +"...");
         this.cloneTemplateRepo(this.template).then(status => {
-            this.spinner = this.spinner.succeed("Module template cloned.");
+            this.spinner = this.spinner.succeed(emotikon.building_construction + "  Module template cloned.");
     
             this.spinner = this.spinner.start("Preparing the new module");
             
@@ -79,10 +80,10 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
                         console.log(chalk.green.bold("> ng build "+ this.moduleName));
                         console.log(chalk.green.bold("> ng serve "));
                         console.log("");
-                        console.log("Enjoy!");
+                        this.spinner = this.spinner.succeed(emotikon.checkered_flag + " The new module is ready.");
                         console.log("");
-            
-                        this.spinner = this.spinner.succeed("New module ready.");
+                        console.log(emotikon.tada, emotikon.tada, "Enjoy!");
+                        console.log("");
                     }
                     this.cleanTempFolder();
                 });
@@ -122,13 +123,12 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
 
 CreateModuleTask.prototype.runNpmInstall = function(callback) {
     
-    /*
-    //skip only for debug
-    callback(null,{});
-    return;
-    */
+    console.log(emotikon.package, "Installing dependencies...");
 
-    console.log("Installing dependencies...");
+    //skip only for debug
+    //callback(null,{});
+    //return;
+    
     process.chdir('./' + this.moduleName);
     npm.load(function(err) {
         // handle errors
