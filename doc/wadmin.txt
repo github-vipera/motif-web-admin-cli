@@ -1,21 +1,16 @@
 Synopsis
 
-    wc-cli command [options]
+    wadmin command [options]
 
 Global Commands
-    create ............................. Create a module project or a web console console project
-    install ............................ Install a web console module
-    serve .............................. Run project with a local webserver
-    deploy ............................. Deploy a web console into a remote MOTIF or for offline installation
+    create ............................. Create a module project or a web admin application project
     help ............................... Get help for a command
-    undeploy ........................... Un-deploy remotely a web console
 
 Learn more about command options using 'wc-cli help <command>'
 
 Examples
 
-    wc-cli create module -n my-admin-module
-    wc-cli create module -n my-clock-module -t web-console-clock-template
-    wc-cli create console -n my-web-admin
-    wc-cli deploy -h https://remote.motif.com:8080/ -p webadmin
+    wadmin create module -n my-admin-module
+    wadmin create module -n my-clock-module -t web-console-clock-template
+    wadmin create console -n my-web-admin
 

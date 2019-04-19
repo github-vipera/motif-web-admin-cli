@@ -11,7 +11,13 @@ const tmp = require('tmp');
 const path = require('path');
 const fs = require('fs-extra');
 const jsonfile = require('jsonfile');
+const replaceInFile = require('replace-in-file');
 const inquirer = require('inquirer');
+const npm = require("npm");
+
+const github_project_url = 'https://github.com/github-vipera/motif-web-admin-module-template-project.git';
+const default_module_project_name = "custom-web-admin-module";
+const default_test_app_project_name = "custom-module-test-app";
 
 /**
  *
@@ -22,11 +28,16 @@ function CreateModuleTask(){
 
 CreateModuleTask.prototype.runTask= function(commands, args, callback) {
 
-    this.spinner = ora('Creating New Module...').start();
+    this.spinner = ora('Creating New Web Admin Module...').start();
 
     // Check args
     this.moduleName = args.name;
-    this.template = 'default';
+    this.description = "";
+    if (args.description){
+        //application description
+        this.description = args.description;
+    }
+    this.template = null;//'default';
     if (args.template){
         //download this template
         this.template = args.template;
@@ -36,122 +47,454 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
     this.repoPath = this.repoPathForTemplate(this.template);
     if (!this.repoPath){
         let errorMsg = "Unknown module template unknown: '" + this.template+ "'";
-        //console.log(chalk.red.bold(errorMsg));
         this.spinner.fail(errorMsg);
         return -1;
     }
 
     //creating a temporary folder
     this.prepareFolders();
-    //console.log("Folders ready");
 
-    this.spinner = this.spinner.start("Cloning from repo " + this.repoPath +"...");
 
-    this.cloneTemplateRepo().then(() => {
-        this.spinner = this.spinner.succeed("Module template clone done.");
-        this.modifyModule().then(()=>{
+    this.askForTemplate().then( ()=>{
 
-            this.moveTempModule();
-            this.updateAngularJsonFile();
-            this.updateTSConfig();
-            //this.runNpmInstall();
-            this.spinner = this.spinner.succeed("Creation module done.");
-            console.log("");
-            console.log(chalk.green.bold("Next steps are:"));
-            console.log(chalk.green.bold("> cd ./projects/" + this.moduleName));
-            console.log(chalk.green.bold("> npm install "));
-            console.log("");
-            console.log("Enjoy!");
-            console.log("");
-            this.cleanTempFolder();
+        this.spinner = this.spinner.start("Cloning from repo " + this.repoPath +"...");
+        this.cloneTemplateRepo(this.template).then(status => {
+            this.spinner = this.spinner.succeed("Module template cloned.");
     
-        }, (error)=>{
-            console.log("Error: ", error);
+            this.spinner = this.spinner.start("Preparing the new module");
+            
+            this.modifyModule().then(()=>{
+                this.renameProjectFolder();
+                this.moveTempModule();
+                this.runNpmInstall((err,data)=>{
+                    if (err){
+                        this.spinner = this.spinner.fail("Module creation fail:", err);
+                    } else {
+                        console.log("");
+                        this.spinner = this.spinner.succeed("Module created successfully.");
+                        console.log("");
+                        console.log(chalk.green.bold("Next steps are:"));
+                        console.log(chalk.green.bold("> cd " + this.moduleName));
+                        console.log(chalk.green.bold("> ng build "+ this.moduleName));
+                        console.log(chalk.green.bold("> ng serve "));
+                        console.log("");
+                        console.log("Enjoy!");
+                        console.log("");
+            
+                        this.spinner = this.spinner.succeed("New module ready.");
+                    }
+                    this.cleanTempFolder();
+                });
+    
+            }, (error)=>{
+    
+                console.log(chalk.red.bold("Error: ", error));
+                console.log("");
+                this.cleanTempFolder();
+                this.spinner.fail(err);
+    
+            });
+            
+    
+        }).catch(err => {
+            console.log(chalk.red.bold("Error: ", err));
             console.log("");
             this.cleanTempFolder();
-            this.spinner.fail(error);
+            this.spinner.fail(err);
         });
 
-    }).catch((err) => {
-        console.log("Error: ", err);
+    }, (error)=>{
+
+        console.log(chalk.red.bold("Error: ", err));
         console.log("");
-        this.cleanTempFolder();
         this.spinner.fail(err);
+
     });
+
+
 
     //console.log(chalk.red.bold("Executing create module: ",moduleName, template));
 
 }
 
 
-CreateModuleTask.prototype.updateTSConfig = function() {
-    this.spinner = this.spinner.start("Updating TS configuration");
 
-    let tsConfigFile = path.join(".", "tsconfig.json");
-    let tsConfig = jsonfile.readFileSync(tsConfigFile);
+CreateModuleTask.prototype.runNpmInstall = function(callback) {
     
-    if (!tsConfig.compilerOptions.paths){
-        tsConfig.compilerOptions.paths = {};
-    }
-    
-    tsConfig.compilerOptions.paths[this.moduleName] = ['dist/' + this.moduleName];
-    tsConfig.compilerOptions.paths[this.moduleName + '/*'] = ['dist/' + this.moduleName + '/*'];
+    /*
+    //skip only for debug
+    callback(null,{});
+    return;
+    */
 
-    jsonfile.writeFileSync(tsConfigFile, tsConfig,   {spaces: 2, EOL: '\r\n'});
-
-    this.spinner = this.spinner.succeed("TS configuration updated.");
-}
-
-CreateModuleTask.prototype.updateAngularJsonFile = function() {
-    this.spinner = this.spinner.start("Updating console project");
-    let jsonAttr = this.createAngularJsonEntry();
-
-    let angularJsonFile = path.join(".", "angular.json");
-    let angularJson = jsonfile.readFileSync(angularJsonFile);
-    angularJson.projects[this.moduleName] = jsonAttr;
-    jsonfile.writeFileSync(angularJsonFile, angularJson,   {spaces: 2, EOL: '\r\n'});
-
-    this.spinner = this.spinner.succeed("Console project updated.");
-}
-
-CreateModuleTask.prototype.runNpmInstall = function() {
-    //process.chdir('./' + this.moduleName);
+    console.log("Installing dependencies...");
+    process.chdir('./' + this.moduleName);
+    npm.load(function(err) {
+        // handle errors
+      
+        // install module ffi
+        npm.commands.install([], function(er, data) {
+            callback(er, data);
+        });
+      
+        npm.on('log', function(message) {
+          // log installation progress
+          console.log(message);
+        });
+      });
     //console.log("Current folder is ", __dirname);
 }
 
 // Move the module form the temp folder to the current working dir
 CreateModuleTask.prototype.moveTempModule = function() {
-    fs.moveSync(this.prjTempFolder, './projects/'+this.moduleName);
+    fs.moveSync(this.prjTempFolder, './'+this.moduleName);
 }
 
 // Change package.json module name
 CreateModuleTask.prototype.modifyModule = function() {
 
-    return new Promise((resolve,reject)=>{
-        this.spinner = this.spinner.start("Preparing new module");
+    return new Promise((resolve, reject)=>{
+
+        this.spinner = this.spinner.start("Updating package.json file.");
+
+        this.updatePackageJsonFile().then(()=>{
+
+            this.spinner = this.spinner.succeed("package.json file updated.");
+            this.spinner = this.spinner.start("Updating angular.json file.");
+
+            // Update the angular.json file
+            this.updateAngularJsonFile().then(()=>{
+
+                this.spinner = this.spinner.succeed("angular.json file updated.");
+                this.spinner = this.spinner.start("Updating ng-package.json file.");
+
+                // Update the project/ng-package.json file
+                this.updateNgPackageJsonFile().then(()=>{
+
+                    this.spinner = this.spinner.succeed("ng-package.json file updated.");
+                    this.spinner = this.spinner.start("Updating karma.conf.js file.");
     
-        // change package json
-        let packageJsonFile = path.join(this.prjTempFolder, "package.json");
+                    // Update the project/karma.conf.js file
+                    this.updateKarmaConfJSFile().then(()=>{
+
+                        this.spinner = this.spinner.succeed("karma.conf.js file updated.");
+                        this.spinner = this.spinner.start("Updating tsconfig.json file.");
+    
+                        // Update the tsconfig.json file
+                        this.updateTSConfigJSONFile().then( ()=>{
+
+                            this.spinner = this.spinner.succeed("tsconfig.json file updated.");
+                            this.spinner = this.spinner.start("Updating README.md file.");
+    
+                            this.updateREADMEFile().then( ()=>{ 
+                                this.spinner = this.spinner.succeed("README.md file updated.");
+                                this.spinner = this.spinner.start("Updating test application files.");
+
+                                this.updatetestAppJSFiles().then( ()=>{
+                                    this.spinner = this.spinner.succeed("Test application files updated.");
+                                    resolve();
+
+                                }, (error) => {
+                                    this.spinner = this.spinner.fail("tsconfig.json file update error.");
+                                    console.log(chalk.red(error));
+                                    reject(error);
+                                });
+
+                            }, (error) =>{
+                                this.spinner = this.spinner.fail("README.md file update error.");
+                                console.log(chalk.red(error));
+                                reject(error);
+                            });
+
+                        }, (error) =>{
+                            this.spinner = this.spinner.fail("tsconfig.json file update error.");
+                            console.log(chalk.red(error));
+                            reject(error);
+                        });
+
+                        }, (error)=>{
+                            this.spinner = this.spinner.fail("karma.conf.js file update error.");
+                            console.log(chalk.red(error));
+                            reject(error);
+                        });
+
+                    }, (error) => {
+                        this.spinner = this.spinner.fail("ng-package.json file update error.");
+                        console.log(chalk.red(error));
+                        reject(error);
+                    });
+    
+            }, (error)=>{
+                this.spinner = this.spinner.fail("angular.json file update error.");
+                console.log(chalk.red(error));
+                reject(error);
+            })     
+
+        }, (error)=>{
+            this.spinner = this.spinner.fail("package.json file update error.");
+            console.log(chalk.red(error));
+            reject(error);
+        });
+        
+    
+    });
+
+
+}
+
+CreateModuleTask.prototype.loadHTML = function(file) {
+    var contents = fs.readFileSync(file, 'utf8');
+    const document = parse5.parse(contents);
+    return document;
+}
+
+CreateModuleTask.prototype.renameProjectFolder = function() {
+    let sourceName = path.join(this.prjTempFolder, "projects", default_module_project_name);
+    let destName = path.join(this.prjTempFolder, "projects", this.moduleName);
+    fs.moveSync(sourceName, destName);
+}
+
+CreateModuleTask.prototype.updatePackageJsonFile = function() {
+
+    return new Promise((resolve, reject)=>{
+
+        // Update the package.json file
+        let packageJsonFile = path.join(this.prjTempFolder, "projects", default_module_project_name, "package.json");
         let packageJson = jsonfile.readFileSync(packageJsonFile);
         packageJson.name = this.moduleName;
         jsonfile.writeFileSync(packageJsonFile, packageJson,   {spaces: 2, EOL: '\r\n'});
-    
-        //change ng-package.json 
-        let ngPackageJsonFile = path.join(this.prjTempFolder, "ng-package.json");
-        let ngPackageJson = jsonfile.readFileSync(ngPackageJsonFile);
-        ngPackageJson.dest = "../../dist/" + this.moduleName;
-        jsonfile.writeFileSync(ngPackageJsonFile, ngPackageJson,   {spaces: 2, EOL: '\r\n'});
-
-        //change ng-package.prod.json 
-        ngPackageJsonFile = path.join(this.prjTempFolder, "ng-package.prod.json");
-        ngPackageJson = jsonfile.readFileSync(ngPackageJsonFile);
-        ngPackageJson.dest = "../../dist/" + this.moduleName;
-        jsonfile.writeFileSync(ngPackageJsonFile, ngPackageJson,   {spaces: 2, EOL: '\r\n'});
-        
-        this.spinner = this.spinner.succeed("New module prepared.");
         
         resolve();
     });
+}
+
+
+CreateModuleTask.prototype.updateNgPackageJsonFile = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Replace all names
+        let angularJsonFile = path.join(this.prjTempFolder, "projects", default_module_project_name, "ng-package.json");
+
+        let options = {
+            files: angularJsonFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
+            //console.log('Modified files:', changes.join(', '));
+            resolve();
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+       
+    });
+}
+
+CreateModuleTask.prototype.updatetestAppJSFiles = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Replace all names
+        let karmaConfFile = path.join(this.prjTempFolder, "projects", default_test_app_project_name, "src", "app", "app.module.ts");
+
+        let options = {
+            files: karmaConfFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
+            resolve();
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+       
+    });
+}
+
+CreateModuleTask.prototype.updateKarmaConfJSFile = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Replace all names
+        let karmaConfFile = path.join(this.prjTempFolder, "projects", default_module_project_name, "karma.conf.js");
+
+        let options = {
+            files: karmaConfFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
+            resolve();
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+       
+    });
+}
+
+CreateModuleTask.prototype.updateTSConfigJSONFile = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Replace all names
+        let tsConfFile = path.join(this.prjTempFolder, "tsconfig.json");
+
+        let options = {
+            files: tsConfFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
+            resolve();
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+       
+    });
+}
+
+CreateModuleTask.prototype.updateREADMEFile = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Replace all names
+        let tsConfFile = path.join(this.prjTempFolder, "projects", default_module_project_name, "README.md");
+
+        let options = {
+            files: tsConfFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
+            resolve();
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+       
+    });
+}
+
+CreateModuleTask.prototype.removeGitFolder = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Remove .git folder derived from the clone command
+        let gitFolder = path.join(this.prjTempFolder, ".git");
+        
+        fs.remove(gitFolder, err => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+          })
+    });
+}
+
+
+CreateModuleTask.prototype.updateAngularJsonFile = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Replace all names
+        let angularJsonFile = path.join(this.prjTempFolder, "angular.json");
+
+        let options = {
+            files: angularJsonFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
+            //console.log('Modified files:', changes.join(', '));
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+       
+        // Enable Proxy if needed
+        this.updateAngularJsonFileForProxy().then(()=>{
+            resolve();
+        }, (error)=>{
+            reject(error);
+        });
+
+    });
+
+}
+
+CreateModuleTask.prototype.updateAngularJsonFileForProxy = function(angularJsonFile) {
+
+    var myPromise = new Promise((resolve, reject)=>{
+
+       var questions = [
+        {
+            type: 'confirm',
+            name: 'proxyEnabled',
+            message: 'Do you want to add proxy support in your project?',
+            default: true
+        },
+        {
+            type: 'input',
+            name: 'proxyURL',
+            message: 'Enter the URL address of your MOTIF:',
+            when: function(answers) {
+                return answers.proxyEnabled;
+            }
+        }
+    ];
+
+
+        this.spinner = this.spinner.stop();
+
+        inquirer.prompt(questions).then( (answers) => {
+
+            try {
+                if (answers.proxyEnabled){
+                    
+                    // Update the json file
+                    let packageJsonFile = path.join(this.prjTempFolder, "angular.json");
+                    let packageJson = jsonfile.readFileSync(packageJsonFile);
+
+                    packageJson.projects[default_test_app_project_name].architect.serve.options["proxyConfig"] = "./proxy.conf.json";
+                    jsonfile.writeFileSync(packageJsonFile, packageJson,   {spaces: 2, EOL: '\r\n'});
+
+                    // Update proxy settings
+                    let proxyJsonFile = path.join(this.prjTempFolder, "proxy.conf.json");
+                    let proxyJson = jsonfile.readFileSync(proxyJsonFile);
+
+                   proxyJson["\/rest"].target = answers.proxyURL;
+                   proxyJson["\/oauth2"].target = answers.proxyURL;
+                   jsonfile.writeFileSync(proxyJsonFile, proxyJson,   {spaces: 2, EOL: '\r\n'});
+
+                } else {
+
+                    //do nothings
+                }
+
+                resolve();
+                
+            } catch (ex){
+                console.error('Error occurred:', ex);
+                this.spinner = this.spinner.fail("Error: " + ex);
+                reject(ex);
+            }
+        });
+    
+    });
+
+    return myPromise;
 
 }
 
@@ -160,12 +503,70 @@ CreateModuleTask.prototype.cleanTempFolder = function() {
     fs.removeSync(this.tempFolder);
 }
 
+CreateModuleTask.prototype.askForTemplate = function() {
+
+    //Ask for template
+   return new Promise((resolve,reject)=>{
+       
+        if (this.template){
+            resolve(this.template);
+        } else {
+
+            var questions = [
+                {
+                    type: 'list',
+                    name: 'choosedTemplate',
+                    message: 'Select a project template:',
+                    default: ['blank'],
+                    choices : [ 'blank', 'grid', 'dashboard']
+                }
+            ];
+        
+            this.spinner = this.spinner.stop();
+
+            inquirer.prompt(questions).then( (answers) => {
+
+                if (answers.choosedTemplate === 'blank' ){
+                    this.template = null;                    
+                } else {
+                    this.template = answers.choosedTemplate;                    
+                }
+    
+                resolve(this.template);
+
+            });
+
+        } 
+   })
+
+}
+
 CreateModuleTask.prototype.cloneTemplateRepo = function(template) {
+
     //Clone the repo
-    return git().outputHandler((command, stdout, stderr) => {
-        //stdout.pipe(process.stdout);
-        //stderr.pipe(process.stderr);
-    }).clone(this.repoPath, this.prjTempFolder);
+   return new Promise((resolve,reject)=>{
+
+        let options = null;
+        if (template){
+            options = ['-b', template + '_template'];
+        }
+
+        git().clone(this.repoPath, this.prjTempFolder, options).then(()=>{
+
+            this.removeGitFolder().then( ()=> {
+                resolve();
+            }, (error) =>{
+                reject(error);
+            })
+
+        }, (error)=>{
+            console.error("error:" , error);
+            reject(error);
+        })
+
+   });
+   
+
 }
 
 
@@ -182,56 +583,15 @@ CreateModuleTask.prototype.createTempFolder = function(template) {
 
 CreateModuleTask.prototype.repoPathForTemplate = function(template) {
 
+    return github_project_url;
+    /*
     if (template==='default'){
-        return 'https://github.com/github-vipera/web-console-module-template.git';
+        return github_project_url;
     } else {
         return undefined;
     }
+    */
 
-}
-
-CreateModuleTask.prototype.createAngularJsonEntry = function() {
-    let entry = {
-        "root": "projects/" + this.moduleName,
-        "sourceRoot": "projects/"+this.moduleName+"/src",
-        "projectType": "library",
-        "prefix": "vp",
-        "architect": {
-          "build": {
-            "builder": "@angular-devkit/build-ng-packagr:build",
-            "options": {
-              "tsConfig": "projects/"+this.moduleName+"/tsconfig.lib.json",
-              "project": "projects/"+this.moduleName+"/ng-package.json"
-            },
-            "configurations": {
-              "production": {
-                "project": "projects/"+this.moduleName+"/ng-package.prod.json"
-              }
-            }
-          },
-          "test": {
-            "builder": "@angular-devkit/build-angular:karma",
-            "options": {
-              "main": "projects/"+this.moduleName+"/src/test.ts",
-              "tsConfig": "projects/"+this.moduleName+"/tsconfig.spec.json",
-              "karmaConfig": "projects/"+this.moduleName+"/karma.conf.js"
-            }
-          },
-          "lint": {
-            "builder": "@angular-devkit/build-angular:tslint",
-            "options": {
-              "tsConfig": [
-                "projects/"+this.moduleName+"/tsconfig.lib.json",
-                "projects/"+this.moduleName+"/tsconfig.spec.json"
-              ],
-              "exclude": [
-                "**/node_modules/**"
-              ]
-            }
-          }
-        }
-      };
-      return entry;
 }
 
 

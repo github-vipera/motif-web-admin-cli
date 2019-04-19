@@ -13,6 +13,9 @@ const fs = require('fs-extra');
 const jsonfile = require('jsonfile');
 const replaceInFile = require('replace-in-file');
 const inquirer = require('inquirer');
+const npm = require("npm");
+
+const github_project_url = 'https://github.com/github-vipera/motif-web-admin-template-project.git';
 
 /**
  *
@@ -23,7 +26,7 @@ function CreateApplicationTask(){
 
 CreateApplicationTask.prototype.runTask= function(commands, args, callback) {
 
-    this.spinner = ora('Creating New Wed Admin Application...').start();
+    this.spinner = ora('Creating New Web Admin Application...').start();
 
     // Check args
     this.applicationName = args.name;
@@ -57,20 +60,25 @@ CreateApplicationTask.prototype.runTask= function(commands, args, callback) {
         this.spinner = this.spinner.start("Preparing the new application");
         this.modifyModule().then(()=>{
             this.moveTempModule();
-            this.runNpmInstall();
-            console.log("");
-            this.spinner = this.spinner.succeed("Application created successfully.");
-            console.log("");
-            console.log(chalk.green.bold("Next steps are:"));
-            console.log(chalk.green.bold("> cd " + this.applicationName));
-            console.log(chalk.green.bold("> npm install "));
-            console.log(chalk.green.bold("> ng serve "));
-            console.log("");
-            console.log("Enjoy!");
-            console.log("");
-            this.cleanTempFolder();
-
-            this.spinner = this.spinner.succeed("New application ready.");
+            this.runNpmInstall((err,data)=>{
+                if (err){
+                    this.spinner = this.spinner.fail("Application creation fail:", err);
+                } else {
+                    console.log("");
+                    this.spinner = this.spinner.succeed("Application created successfully.");
+                    console.log("");
+                    console.log(chalk.green.bold("Next steps are:"));
+                    console.log(chalk.green.bold("> cd " + this.applicationName));
+                    //console.log(chalk.green.bold("> npm install "));
+                    console.log(chalk.green.bold("> ng serve "));
+                    console.log("");
+                    console.log("Enjoy!");
+                    console.log("");
+        
+                    this.spinner = this.spinner.succeed("New application ready.");
+                }
+                this.cleanTempFolder();
+            });
 
         }, (error)=>{
 
@@ -95,8 +103,22 @@ CreateApplicationTask.prototype.runTask= function(commands, args, callback) {
 
 
 
-CreateApplicationTask.prototype.runNpmInstall = function() {
+CreateApplicationTask.prototype.runNpmInstall = function(callback) {
+    console.log("Installing dependencies...");
     process.chdir('./' + this.applicationName);
+    npm.load(function(err) {
+        // handle errors
+      
+        // install module ffi
+        npm.commands.install([], function(er, data) {
+            callback(er, data);
+        });
+      
+        npm.on('log', function(message) {
+          // log installation progress
+          console.log(message);
+        });
+      });
     //console.log("Current folder is ", __dirname);
 }
 
@@ -166,7 +188,7 @@ CreateApplicationTask.prototype.updateHTML = function() {
             };
             try {
                 const changes = replaceInFile.sync(options);
-                console.log('Modified files:', changes.join(', '));
+                //console.log('Modified files:', changes.join(', '));
                 resolve();
             } catch (error) {
                 console.error('Error occurred:', error);
@@ -220,9 +242,9 @@ CreateApplicationTask.prototype.updateAngularJsonFile = function() {
 
         //Replace all names
         let angularJsonFile = path.join(this.prjTempFolder, "angular.json");
-        const options = {
+        let options = {
             files: angularJsonFile,
-            from: /web-console-template/g,
+            from: /motif-web-admin-template-project/g,
             to: this.applicationName,
         };
         try {
@@ -232,9 +254,8 @@ CreateApplicationTask.prototype.updateAngularJsonFile = function() {
             console.error('Error occurred:', error);
             reject(error);
         }
-        
+       
         // Enable Proxy if needed
-
         this.updateAngularJsonFileForProxy().then(()=>{
             resolve();
         }, (error)=>{
@@ -249,39 +270,23 @@ CreateApplicationTask.prototype.updateAngularJsonFileForProxy = function(angular
 
     var myPromise = new Promise((resolve, reject)=>{
 
-        var questions = [
-            {
-                type: 'confirm',
-                name: 'proxyEnabled',
-                message: 'Do you want to add proxy support in your project?',
-                default: false
-            },
-            {
-                type: 'input',
-                name: 'proxyIP',
-                message: 'Enter the ip address of your MOTIF:',
-                when: function(answers) {
-                    return answers.proxyEnabled;
-                }
-            },
-            {
-                type: 'input',
-                name: 'proxyPort',
-                message: 'Enter the port number of your MOTIF:',
-                when: function(answers) {
-                    return answers.proxyEnabled;
-                }
-            },
-            {
-                type: 'input',
-                name: 'proxyScheme',
-                message: 'Enter the URL scheme:',
-                default: "http",
-                when: function(answers) {
-                    return answers.proxyEnabled;
-                }
+       var questions = [
+        {
+            type: 'confirm',
+            name: 'proxyEnabled',
+            message: 'Do you want to add proxy support in your project?',
+            default: true
+        },
+        {
+            type: 'input',
+            name: 'proxyURL',
+            message: 'Enter the URL address of your MOTIF:',
+            when: function(answers) {
+                return answers.proxyEnabled;
             }
-        ];
+        }
+    ];
+
 
         this.spinner = this.spinner.stop();
 
@@ -293,16 +298,17 @@ CreateApplicationTask.prototype.updateAngularJsonFileForProxy = function(angular
                     // Update the json file
                     let packageJsonFile = path.join(this.prjTempFolder, "angular.json");
                     let packageJson = jsonfile.readFileSync(packageJsonFile);
+
                     packageJson.projects[this.applicationName].architect.serve.options["proxyConfig"] = "./proxy.conf.json";
                     jsonfile.writeFileSync(packageJsonFile, packageJson,   {spaces: 2, EOL: '\r\n'});
-
 
                     // Update proxy settings
                     let proxyJsonFile = path.join(this.prjTempFolder, "proxy.conf.json");
                     let proxyJson = jsonfile.readFileSync(proxyJsonFile);
-                    proxyJson["/rest"].target = answers.proxyScheme +"://" + answers.proxyIP + ":" + answers.proxyPort;
-                    proxyJson["/oauth"].target = answers.proxyScheme +"://" + answers.proxyIP + ":" + answers.proxyPort;
-                    jsonfile.writeFileSync(proxyJsonFile, proxyJson,   {spaces: 2, EOL: '\r\n'});
+
+                   proxyJson["\/rest"].target = answers.proxyURL;
+                   proxyJson["\/oauth2"].target = answers.proxyURL;
+                   jsonfile.writeFileSync(proxyJsonFile, proxyJson,   {spaces: 2, EOL: '\r\n'});
 
                 } else {
 
@@ -337,13 +343,27 @@ CreateApplicationTask.prototype.cloneTemplateRepo = function(template) {
         stderr.pipe(process.stderr);
     }).clone(this.repoPath, this.prjTempFolder);
     */   
-   return git().clone(this.repoPath, this.prjTempFolder);
+   return new Promise((resolve,reject)=>{
+
+        git().clone(this.repoPath, this.prjTempFolder).then(()=>{
+
+            this.removeGitFolder().then( ()=> {
+                resolve();
+            }, (error) =>{
+                reject(error);
+            })
+
+        }, (error)=>{
+            reject(error);
+        })
+
+    });
 }
 
 
 CreateApplicationTask.prototype.prepareFolders = function(template) {
     this.tempFolder = this.createTempFolder();
-    console.log('Temp Folder: ', this.tempFolder);
+    //console.log('Temp Folder: ', this.tempFolder);
     this.prjTempFolder = path.join(this.tempFolder, this.applicationName);
 }
 
@@ -355,13 +375,29 @@ CreateApplicationTask.prototype.createTempFolder = function(template) {
 CreateApplicationTask.prototype.repoPathForTemplate = function(template) {
 
     if (template==='default'){
-        return 'https://github.com/github-vipera/motif-web-admin-template-project.git';
+        return github_project_url;
     } else {
         return undefined;
     }
 
 }
 
+CreateApplicationTask.prototype.removeGitFolder = function() {
+
+    return new Promise((resolve,reject)=>{
+
+        //Remove .git folder derived from the clone command
+        let gitFolder = path.join(this.prjTempFolder, ".git");
+        
+        fs.remove(gitFolder, err => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+          })
+    });
+}
 
 // export the class
 module.exports = CreateApplicationTask;
