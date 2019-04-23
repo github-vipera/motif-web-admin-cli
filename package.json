@@ -1,6 +1,6 @@
 {
   "name": "motif-web-admin-cli",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "MOTIF Web Admin CLI",
   "main": "wadmin",
   "bin": {
