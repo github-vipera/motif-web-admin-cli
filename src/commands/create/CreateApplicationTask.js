@@ -140,29 +140,49 @@ CreateApplicationTask.prototype.modifyModule = function() {
 
     return new Promise((resolve, reject)=>{
 
+        this.spinner = this.spinner.start("Updating package.json file.");
+
         this.updatePackageJsonFile().then(()=>{
+
+            this.spinner = this.spinner.succeed("package.json file updated.");
+            this.spinner = this.spinner.start("Updating angular.json file.");
 
             // Update the angular.json file
             this.updateAngularJsonFile().then(()=>{
 
+                this.spinner = this.spinner.succeed("angular.json file updated.");
+                this.spinner = this.spinner.start("Updating descriptor file.");
+
                 // Update the Application Descriptor JSON file 
                 this.updateConsoleDescriptorJsonFile().then(()=>{
-                    
+
+                    this.spinner = this.spinner.succeed("Descriptor file updated.");
+                    this.spinner = this.spinner.start("Updating HTML files.");
+    
                     this.updateHTML().then(()=>{
+                        this.spinner = this.spinner.succeed("HTML files updated.");
                         resolve();
                     }, (error)=>{
+                        this.spinner = this.spinner.fail("HTML files update error.");
+                        console.log(chalk.red(error));
                         reject(error);
                     });
 
                 }, (error)=>{
+                    this.spinner = this.spinner.fail("Descriptor file update error.");
+                    console.log(chalk.red(error));
                     reject(error);
                 });
     
             }, (error)=>{
+                this.spinner = this.spinner.fail("Angular file update error.");
+                console.log(chalk.red(error));
                 reject(error);
             })     
     
         }, (error)=>{
+            this.spinner = this.spinner.fail("package.json file update error.");
+            console.log(chalk.red(error));
             reject(error);
         });
     
