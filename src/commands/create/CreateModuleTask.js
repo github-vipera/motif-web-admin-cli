@@ -77,7 +77,7 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
                         console.log("");
                         console.log(chalk.green.bold("Next steps are:"));
                         console.log(chalk.green.bold("> cd " + this.moduleName));
-                        console.log(chalk.green.bold("> ng build "+ this.moduleName));
+                        console.log(chalk.green.bold("> npm run buildlib:local"));
                         console.log(chalk.green.bold("> ng serve "));
                         console.log("");
                         this.spinner = this.spinner.succeed(emotikon.checkered_flag + " The new module is ready.");
@@ -265,7 +265,21 @@ CreateModuleTask.prototype.updatePackageJsonFile = function() {
         packageJson.name = this.moduleName;
         jsonfile.writeFileSync(packageJsonFile, packageJson,   {spaces: 2, EOL: '\r\n'});
         
-        resolve();
+        // Update the main package.json file
+        packageJsonFile = path.join(this.prjTempFolder, "package.json");
+        let options = {
+            files: packageJsonFile,
+            from: /custom-web-admin-module/g,
+            to: this.moduleName,
+        };
+        try {
+            const changes = replaceInFile.sync(options);
+            resolve();
+        } catch (error) {
+            console.error('Error occurred:', error);
+            reject(error);
+        }
+
     });
 }
 
