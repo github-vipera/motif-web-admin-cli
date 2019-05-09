@@ -1,6 +1,6 @@
 {
   "name": "motif-web-admin-cli",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "MOTIF Web Admin CLI",
   "main": "wadmin",
   "bin": {
@@ -9,7 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Marco Bonati",
+  "author": "Marco Bonati; Marco Tormento",
   "license": "Vipera Commercial",
   "repository": {
     "type": "git",

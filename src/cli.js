@@ -62,6 +62,8 @@ module.exports = function (inputArgs, cb) {
 
 function cli (inputArgs, cb) {
 
+    checkForUpdates ();
+
     var args = nopt(knownOpts, shortHands, inputArgs);
 
     process.on('uncaughtException', function (err) {
@@ -144,17 +146,13 @@ function printHelp (command) {
 }
 
 function checkForUpdates () {
-    /*
+    
     try {
         // Checks for available update and returns an instance
-        var notifier = updateNotifier({
-            pkg: pkg,
-            registry: 'github',
-            githubOwner: 'github-vipera',
-            updateCheckInterval: 0
-        });
+        var notifier = updateNotifier({pkg});
         // Notify using the built-in convenience method
         notifier.notify();
+        //console.log(notifier.update);
     } catch (e) {
         // https://issues.apache.org/jira/browse/CB-10062
         if (e && e.message && /EACCES/.test(e.message)) {
@@ -164,7 +162,7 @@ function checkForUpdates () {
             throw e;
         }
     }
-    */
+    
    updateNotifier({pkg}).notify();   
 }
 
