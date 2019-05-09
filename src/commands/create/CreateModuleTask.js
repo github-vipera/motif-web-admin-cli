@@ -107,9 +107,9 @@ CreateModuleTask.prototype.runTask= function(commands, args, callback) {
 
     }, (error)=>{
 
-        console.log(chalk.red.bold("Error: ", err));
+        console.log(chalk.red.bold("Error: ", error));
         console.log("");
-        this.spinner.fail(err);
+        this.spinner.fail(error);
 
     });
 
