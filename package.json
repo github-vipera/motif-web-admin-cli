@@ -1,6 +1,6 @@
 {
   "name": "motif-web-admin-cli",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "description": "MOTIF Web Admin CLI",
   "main": "wadmin",
   "bin": {
@@ -13,7 +13,7 @@
   "license": "Vipera Commercial",
   "repository": {
     "type": "git",
-    "url": "https://github.com/github-vipera/web-console-cli"
+    "url": "https://github.com/github-vipera/motif-web-admin-cli"
   },
   "dependencies": {
     "async": "^2.6.2",
