@@ -14,7 +14,7 @@ npm install -g git+https://github.com/github-vipera/motif-web-admin-cli
 Run command:
 
 ```console
-wadmin create admin -n my-web-admin-app
+wadmin create application -n my-web-admin-app
 ```
 
 ### How to create a new web-admin module
