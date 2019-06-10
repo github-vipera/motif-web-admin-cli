@@ -13,7 +13,7 @@
   "license": "Vipera Commercial",
   "repository": {
     "type": "git",
-    "url": "https://github.com/github-vipera/web-console-cli"
+    "url": "https://github.com/github-vipera/motif-web-admin-cli"
   },
   "dependencies": {
     "async": "^2.6.2",
