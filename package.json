@@ -16,7 +16,7 @@
     "url": "https://github.com/github-vipera/motif-web-admin-cli"
   },
   "dependencies": {
-    "async": "^2.6.2",
+    "async": "^2.6.4",
     "chalk": "^2.4.2",
     "easy-zip": "0.0.4",
     "figlet": "^1.2.1",
